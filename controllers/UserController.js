@@ -1,4 +1,4 @@
-const { db } = require('../database');
+const db = require('../config/database');
 const UserService = require('../services/User');
 const multer  = require('multer')
 const upload = multer({ dest: 'uploads/' })
@@ -41,6 +41,7 @@ exports.listerUser = (req, res) => {
         return res.status(200).json(result);
     });
 };
+
 exports.getUserById = (req, res) => {
     const id = req.params.id;
 
@@ -51,7 +52,7 @@ exports.getUserById = (req, res) => {
         }
 
         if (result.length === 0) {
-            return res.status(404).json({ message: 'Aucune type trouvée avec cet ID.' });
+            return res.status(404).json({ message: 'Aucun utilisateur trouvé avec cet ID.' });
         }
 
         return res.status(200).json(result[0]);

@@ -1,9 +1,6 @@
-const { db } = require('../database');
+const db = require('../config/database');
 const jwt = require('jsonwebtoken');
 const secretKey = process.env.SECRET_KEY || 'votreclésecrete'; 
-
-const ERROR_MESSAGE = 'L\'authentification a échoué';
-const SUCCESS_MESSAGE = 'L\'authentification a réussi';
 
 exports.loginUser = async (req, res) => {
     try {
@@ -24,8 +21,11 @@ exports.loginUser = async (req, res) => {
                 return res.status(401).json({ message: 'Email ou mot de passe incorrect' });
             }
 
+            // Extract user data
+            const { nom, prenom, tel, photo_url } = result[0];
+
             // Génération du token JWT si l'utilisateur existe et que le mot de passe est correct
-            const token = jwt.sign({ email }, secretKey, { expiresIn: '1h' });
+            const token = jwt.sign({ nom, prenom, email, mot_de_passe, tel, photo_url }, secretKey);
             res.json({ token, message: 'Connexion réussie' });
         });
     } catch (error) {
@@ -79,7 +79,7 @@ exports.loginAdmin =  (req, res) => {
         }
        
         if (email === 'admin' && email === 'admin') {
-            const token = jwt.sign({ email }, secretKey, { expiresIn: '1h' });
+            const token = jwt.sign({ email }, secretKey);
             res.json({ token, message: SUCCESS_MESSAGE });
         } else {
             res.status(401).json({ message: ERROR_MESSAGE });

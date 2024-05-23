@@ -4,7 +4,7 @@ const controller = require('../controllers/UserController');
 const service = require('../services/User');
 
 router.get('/lister', controller.listerUser);
-router.get('/:id/listerbyid', controller.getUserById);
+router.get('/:id', controller.getUserById);
 router.post('/ajouter', controller.ajouterUser);
 router.put('/:id/modifier', controller.modifierUser);
 router.delete('/:id/supprimer', controller.supprimerUser);
