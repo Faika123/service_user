@@ -1,83 +1,74 @@
 pipeline {
     agent any
-
     environment {
-        NODEJS_HOME = tool name: 'NodeJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
-        PATH = "${env.NODEJS_HOME}/bin:${env.PATH}"
-        CHROME_BIN = '/usr/bin/google-chrome' // Path to Chrome binary
-        DOCKER_HUB_REGISTRY = 'docker.io' // Docker Hub registry URL
+        DOCKER_PATH = "C:\\Program Files\\Docker\\cli-plugins"
+        PATH = "${DOCKER_PATH}:${PATH}"
+        NODEJS_PATH = "C:\\Program Files\\nodejs"
     }
-
     stages {
-        stage('Checkout') {
-            steps {
-                checkout scm
-            }
-        }
-
-        stage('Install dependencies') {
-          steps {
-    sh '${NODEJS_HOME}/bin/npm install'
-    // sh '${NODEJS_HOME}/bin/npm install jest --save-dev'
-    // sh '${NODEJS_HOME}/bin/npm install bcrypt'
-}
-            }
-        
-
-        stage('Fix Permissions') {
-            steps {
-                // Fix permissions for the project directory and node_modules
-                sh 'chmod -R 777 .'
-            }
-        }
-
-
-        stage('Build') {
-            steps {
-                // sh 'node app.js'
-                sh 'npm run build'
-            }
-        }
-
-        // stage('Test') {
-        //     steps {
-        //         // Run Jest tests
-        //         sh 'npm test'
-        //     }
-        // }
-
-        stage('Build Docker image') {
-            steps {
-                sh 'docker build -t user:latest -f Dockerfile .'
-                // Tag the Docker image with a version
-                sh 'docker tag user:latest faika/user:latest'
-            }
-        }
-
-        stage('Deploy Docker image') {
+        stage('Install Node.js and npm') {
             steps {
                 script {
-                    // Push Docker image to Docker Hub
-                    withCredentials([string(credentialsId: 'token', variable: 'DOCKER_TOKEN')]) {
-                        docker.withRegistry('https://index.docker.io/v1/', '12') {
-                            // Push both the latest and tagged images
-                            docker.image('faika/user:latest').push('latest')
-                        }
+                    def nodejs = tool name: 'NODEJS', type: 'jenkins.plugins.nodejs.tools.NodeJSInstallation'
+                    env.PATH = "${nodejs}/bin:${env.PATH}"
+                }
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                script {
+                    checkout scm
+                }
+            }
+        }
+
+        stage('SonarQube Analysis') {
+            steps {
+                script {
+                    withSonarQubeEnv('SonarQube Test') {
+                        bat 'npm run sonar'
                     }
                 }
             }
         }
-    }
+        
+        stage('Build & Rename Docker Image') {
+            steps {
+                script {
+                    bat "docker build -t utilisateur:latest ."
+                    bat "docker tag utilisateur:latest faika/utilisateur:latest"
+                }
+            }
+        }
 
+        stage('Publish Docker Image') {
+            steps {
+                script {
+                    withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
+                        bat 'docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%'
+                        bat 'docker tag faika/utilisateur:latest faika/utilisateur:%BUILD_ID%'
+                        bat 'docker push faika/utilisateur:%BUILD_ID%'
+                        bat 'docker push faika/utilisateur:latest'
+                    }
+                }
+            }
+        }
+        stage('kubernetes Deployment') {
+            steps {
+                script {
+                   bat 'kubectl apply -f user-deployment.yaml'
+                   bat 'kubectl apply -f user-service.yaml' 
+                }
+            }
+        }
+    }
     post {
         success {
             echo 'Build succeeded!'
-            // Add any success post-build actions here
         }
-
         failure {
             echo 'Build failed!'
-            // Add any failure post-build actions here
         }
     }
 }
