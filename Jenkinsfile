@@ -37,8 +37,8 @@ pipeline {
         stage('Build & Rename Docker Image') {
             steps {
                 script {
-                    bat "docker build -t utilisateur:latest ."
-                    bat "docker tag utilisateur:latest faika/utilisateur:latest"
+                    bat "docker build -t service_users:latest ."
+                    bat "docker tag service_users:latest faika/service_users:latest"
                 }
             }
         }
@@ -48,9 +48,9 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKERHUB_USERNAME', passwordVariable: 'DOCKERHUB_PASSWORD')]) {
                         bat 'docker login -u %DOCKERHUB_USERNAME% -p %DOCKERHUB_PASSWORD%'
-                        bat 'docker tag faika/utilisateur:latest faika/utilisateur:%BUILD_ID%'
-                        bat 'docker push faika/utilisateur:%BUILD_ID%'
-                        bat 'docker push faika/utilisateur:latest'
+                        bat 'docker tag faika/service_users:latest faika/service_users:%BUILD_ID%'
+                        bat 'docker push faika/service_users:%BUILD_ID%'
+                        bat 'docker push faika/service_users:latest'
                     }
                 }
             }
