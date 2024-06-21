@@ -2,8 +2,9 @@ pipeline {
     agent any
     environment {
         DOCKER_PATH = "C:\\Program Files\\Docker\\cli-plugins"
-        PATH = "${DOCKER_PATH}:${PATH}"
         NODEJS_PATH = "C:\\Program Files\\nodejs"
+        SONAR_SCANNER_HOME = "C:\\Program Files\\sonar-scanner-5.0.1.3006-windows" 
+        PATH = "${SONAR_SCANNER_HOME}\\bin;${NODEJS_PATH};${DOCKER_PATH};${env.PATH}"
     }
     stages {
         stage('Install Node.js and npm') {
@@ -26,7 +27,7 @@ pipeline {
         stage('SonarQube Analysis') {
             steps {
                 script {
-                    withSonarQubeEnv('SonarQube Test') {
+                    withSonarQubeEnv('SONARQUBE') {
                         bat 'npm run sonar'
                     }
                 }
